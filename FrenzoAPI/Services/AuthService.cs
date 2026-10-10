@@ -103,12 +103,18 @@ public class AuthService : IAuthService
     }
 
     // Maps entity to safe output (never exposes PasswordHash).
-    private static UserResponse Map(TblUser u) => new()
+    // CreatedAt leaves as UTC ISO (Kind=Utc) for clients to localize; the stored row stays untouched.
+    private static UserResponse Map(TblUser u)
     {
-        Id = u.Id,
-        Username = u.Username,
-        Email = u.Email,
-        PhoneNumber = u.PhoneNumber,
-        CreatedAt = u.CreatedAt
-    };
+        DateTime createdAtUtc = DateTime.SpecifyKind(u.CreatedAt, DateTimeKind.Utc);
+        UserResponse response = new UserResponse
+        {
+            Id = u.Id,
+            Username = u.Username,
+            Email = u.Email,
+            PhoneNumber = u.PhoneNumber,
+            CreatedAt = createdAtUtc
+        };
+        return response;
+    }
 }
