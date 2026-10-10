@@ -362,5 +362,8 @@ MigrationBackup/
 # Local project docs (day-wise notes, schema exports) — do not push to git
 docs/
 
+# Local rolling log files — do not push to git
+logs/
+
 # Fody - auto-generated XML schema
 FodyWeavers.xsd

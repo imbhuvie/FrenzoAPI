@@ -21,6 +21,7 @@ public class TokenService : ITokenService
     }
 
     // Builds a token for an already-verified user plus its UTC expiry.
+    // No try-catch here: signing has no recoverable failure; config bugs must fail fast (R11).
     public (string Token, DateTime ExpiresAt) GenerateAccessToken(TblUser user)
     {
         string? configuredKey = _configuration["Jwt:Key"];

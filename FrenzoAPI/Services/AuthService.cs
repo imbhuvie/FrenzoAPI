@@ -60,12 +60,22 @@ public class AuthService : IAuthService
         };
 
         _db.TblUsers.Add(user);
-        await _db.SaveChangesAsync();
+
+        // Race between the checks above and this insert; the unique index is the backstop (R11: only catch that translates).
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return ApiResponse<UserResponse>.Fail("Username, email, or phone already exists.");
+        }
 
         return ApiResponse<UserResponse>.Ok(Map(user), "Signup successful.");
     }
 
     // Verifies username/email/phone + password, then issues a signed access token.
+    // No try-catch here: read-only path, unexpected failures go to the middleware (R11).
     public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request)
     {
         string identifier = request.Identifier.Trim();

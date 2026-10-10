@@ -1,4 +1,5 @@
 using System.Text;
+using FrenZoAPI.Common.Middleware;
 using FrenZoAPI.DataContext;
 using FrenZoAPI.Services;
 using FrenZoAPI.Services.Interfaces;
@@ -6,8 +7,19 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
+
+// Persists logs to daily rolling files (DB-independent, survives restarts); 30 files retained.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.File("logs/frenzoapi-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {CorrelationId} {SourceContext} {Message}{NewLine}{Exception}")
+    .CreateLogger();
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Routes all ILogger output (including the exception middleware) through Serilog.
+builder.Host.UseSerilog();
 
 // Registers controllers and the Dev-only OpenAPI document.
 builder.Services.AddControllers();
@@ -48,6 +60,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 WebApplication app = builder.Build();
+
+// Assigns the correlation id first, then catches unhandled failures (R11/R12 ordering).
+app.UseMiddleware<CorrelationMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Serves the OpenAPI JSON plus the Scalar browser UI in Development only.
 if (app.Environment.IsDevelopment())
