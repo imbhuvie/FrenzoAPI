@@ -32,14 +32,14 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
-    // POST api/auth/login -> 200 ok, 400 validation, 401 bad credentials.
+    // POST api/auth/login -> 200 ok + token, 400 validation, 401 bad credentials.
     [HttpPost("login")]
-    public async Task<ActionResult<ApiResponse<UserResponse>>> Login([FromBody] LoginRequest request)
+    public async Task<ActionResult<ApiResponse<AuthResponse>>> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ApiResponse<UserResponse>.Fail("Validation failed.", ModelState));
+            return BadRequest(ApiResponse<AuthResponse>.Fail("Validation failed.", ModelState));
 
-        ApiResponse<UserResponse> result = await _auth.LoginAsync(request);
+        ApiResponse<AuthResponse> result = await _auth.LoginAsync(request);
 
         if (!result.Success)
             return Unauthorized(result);

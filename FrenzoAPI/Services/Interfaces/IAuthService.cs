@@ -8,6 +8,6 @@ public interface IAuthService
 {
     // Creates the TblUser row and returns the safe user payload.
     Task<ApiResponse<UserResponse>> SignupAsync(SignupRequest request);
-    // Checks credentials and returns the safe user payload.
-    Task<ApiResponse<UserResponse>> LoginAsync(LoginRequest request);
+    // Checks credentials and returns the user plus a signed access token.
+    Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request);
 }

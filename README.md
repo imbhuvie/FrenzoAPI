@@ -118,8 +118,8 @@ Only custom FrenZo endpoints are listed here (template `WeatherForecast` removed
 
 | Method | Route | Description | Added |
 |--------|-------|-------------|-------|
-| POST | `/api/auth/signup` | Register user (username + email + phone + password, BCrypt hash) | 2026-10-10 |
-| POST | `/api/auth/login` | Login with username / email / phone + password | 2026-10-10 |
+| POST | `/api/auth/signup` | Register user (username + email + phone + password, BCrypt hash; tokenless) | 2026-10-10 |
+| POST | `/api/auth/login` | Login with username / email / phone + password → `{ user, token, expiresAt }` (60-min JWT) | 2026-10-10 (JWT added) |
 
 When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's `Endpoints added` section.
 
@@ -127,6 +127,7 @@ When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's 
 
 - `docs/CHANGELOG.md` — day-wise log: commands executed, packages installed, files generated, endpoints added.
 - `docs/IMPLEMENTATION_PLAN_Auth.md` — detailed Auth implementation plan + rationale.
+- `docs/IMPLEMENTATION_PLAN_Jwt.md` — JWT step-by-step: what/why/how + implementation flow (future reference).
 - `docs/features/Auth.md` — per-feature Auth spec (routes, request/response examples).
 - `docs/database/01-schema.sql` — full pgAdmin schema export (source of truth).
 - `docs/database/SCHEMA.md` — schema reference + timestamp-type note (UTC fix).

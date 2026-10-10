@@ -14,10 +14,12 @@ public class AuthService : IAuthService
     private const int PasswordHashWorkFactor = 11;
 
     private readonly AppDbContext _db;
+    private readonly ITokenService _tokens;
 
-    public AuthService(AppDbContext db)
+    public AuthService(AppDbContext db, ITokenService tokens)
     {
         _db = db;
+        _tokens = tokens;
     }
 
     // Registers a new user row with a BCrypt hash (no UserProfile yet).
@@ -63,8 +65,8 @@ public class AuthService : IAuthService
         return ApiResponse<UserResponse>.Ok(Map(user), "Signup successful.");
     }
 
-    // Verifies username/email/phone + password without revealing which part failed.
-    public async Task<ApiResponse<UserResponse>> LoginAsync(LoginRequest request)
+    // Verifies username/email/phone + password, then issues a signed access token.
+    public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request)
     {
         string identifier = request.Identifier.Trim();
         string identifierLower = identifier.ToLowerInvariant();
@@ -77,9 +79,17 @@ public class AuthService : IAuthService
         // Same message for not-found and bad-password to avoid user enumeration.
         bool isPasswordValid = user is not null && BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
         if (user is null || !isPasswordValid)
-            return ApiResponse<UserResponse>.Fail("Invalid credentials.");
+            return ApiResponse<AuthResponse>.Fail("Invalid credentials.");
 
-        return ApiResponse<UserResponse>.Ok(Map(user), "Login successful.");
+        // Credentials verified: sign a short-lived Bearer token for later requests.
+        (string token, DateTime expiresAt) = _tokens.GenerateAccessToken(user);
+        AuthResponse authPayload = new AuthResponse
+        {
+            User = Map(user),
+            Token = token,
+            ExpiresAt = expiresAt
+        };
+        return ApiResponse<AuthResponse>.Ok(authPayload, "Login successful.");
     }
 
     // Maps entity to safe output (never exposes PasswordHash).
