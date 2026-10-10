@@ -17,15 +17,20 @@ Built with **ASP.NET Core (.NET 9)** + **Entity Framework Core** + **PostgreSQL 
 ```text
 FrenzoAPI/
 ├── FrenzoAPI/
+│   ├── Common/Responses/    # ApiResponse<T> envelope
 │   ├── Controllers/       # Custom API controllers (WeatherForecastController is template default, ignored)
 │   ├── DataContext/
 │   │   └── AppDbContext.cs # Scaffolded DbContext (FrenZoAPI.DataContext)
+│   ├── DTOs/Auth/         # SignupRequest, LoginRequest, UserResponse
+│   ├── Services/          # IAuthService + AuthService (BCrypt + EF)
 │   ├── Models/            # Scaffolded entities (FrenZoAPI.Models) — 13 tables
 │   ├── Program.cs
 │   ├── appsettings.json
 │   └── FrenzoAPI.csproj
 ├── docs/
-│   └── CHANGELOG.md       # Day-wise changes, commands, packages
+│   ├── CHANGELOG.md             # Day-wise changes, commands, packages
+│   ├── IMPLEMENTATION_PLAN_Auth.md # Detailed Auth plan + rationale
+│   └── features/Auth.md         # Per-feature Auth spec (routes, payloads)
 └── README.md
 ```
 
@@ -101,6 +106,12 @@ dotnet run --project "D:\DotNetCodes\FrenZoAPI\FrenZoAPI\FrenZoAPI.csproj"
 
 OpenAPI (Development only): `/openapi/v1.json`
 
+### Testing from browser (Scalar)
+```powershell
+dotnet run --project "D:\DotNetCodes\FrenZoAPI\FrenZoAPI\FrenZoAPI.csproj"
+```
+Open `https://localhost:<port>/scalar/v1` (port shown in console) → try `POST api/auth/signup` and `POST api/auth/login` directly from the browser.
+
 ## Endpoints
 
 > Template `WeatherForecast` (`GET /WeatherForecast`) is excluded by convention.
@@ -109,10 +120,15 @@ No custom endpoints added yet (as of 2026-10-10). This table will be updated day
 
 | Method | Route | Description | Added |
 |--------|-------|-------------|-------|
-| — | — | No custom endpoints yet | — |
+| POST | `/api/auth/signup` | Register user (username + email + phone + password, BCrypt hash) | 2026-10-10 |
+| POST | `/api/auth/login` | Login with username / email / phone + password | 2026-10-10 |
 
 When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's `Endpoints added` section.
 
 ## Docs
 
 - `docs/CHANGELOG.md` — day-wise log: commands executed, packages installed, files generated, endpoints added.
+- `docs/IMPLEMENTATION_PLAN_Auth.md` — detailed Auth implementation plan + rationale.
+- `docs/features/Auth.md` — per-feature Auth spec (routes, request/response examples).
+- `docs/database/01-schema.sql` — full pgAdmin schema export (source of truth).
+- `docs/database/SCHEMA.md` — schema reference + timestamp-type note (UTC fix).
