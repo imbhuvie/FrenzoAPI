@@ -1,6 +1,30 @@
 @FrenzoAPI_HostAddress = http://localhost:5143
 
-GET {{FrenzoAPI_HostAddress}}/weatherforecast/
-Accept: application/json
+### Signup
+POST {{FrenzoAPI_HostAddress}}/api/auth/signup
+Content-Type: application/json
 
-###
+{
+  "username": "bhupen",
+  "email": "bhupen@example.com",
+  "phoneNumber": "+919876543210",
+  "password": "Secret123"
+}
+
+### Login (email)
+POST {{FrenzoAPI_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "bhupen@example.com",
+  "password": "Secret123"
+}
+
+### Login (username)
+POST {{FrenzoAPI_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "bhupen",
+  "password": "Secret123"
+}

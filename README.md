@@ -3,7 +3,7 @@
 FrenZoAPI is the backend API for **FrenZo** — a chat / messaging application.
 Built with **ASP.NET Core (.NET 9)** + **Entity Framework Core** + **PostgreSQL (Npgsql)**, using a **Database-First** workflow (`dotnet ef dbcontext scaffold`).
 
-> Default template APIs (e.g. `WeatherForecast`) are intentionally excluded from this README. Only custom FrenZo endpoints are documented here.
+> Template `WeatherForecast` files were removed from the project; only custom FrenZo endpoints are documented here.
 
 ## Tech Stack
 
@@ -18,7 +18,7 @@ Built with **ASP.NET Core (.NET 9)** + **Entity Framework Core** + **PostgreSQL 
 FrenzoAPI/
 ├── FrenzoAPI/
 │   ├── Common/Responses/    # ApiResponse<T> envelope
-│   ├── Controllers/       # Custom API controllers (WeatherForecastController is template default, ignored)
+│   ├── Controllers/       # Custom API controllers (template WeatherForecast removed)
 │   ├── DataContext/
 │   │   └── AppDbContext.cs # Scaffolded DbContext (FrenZoAPI.DataContext)
 │   ├── DTOs/Auth/         # SignupRequest, LoginRequest, UserResponse
@@ -114,9 +114,7 @@ Open `https://localhost:<port>/scalar/v1` (port shown in console) → try `POST 
 
 ## Endpoints
 
-> Template `WeatherForecast` (`GET /WeatherForecast`) is excluded by convention.
-
-No custom endpoints added yet (as of 2026-10-10). This table will be updated day-wise as controllers are added.
+Only custom FrenZo endpoints are listed here (template `WeatherForecast` removed 2026-10-10).
 
 | Method | Route | Description | Added |
 |--------|-------|-------------|-------|
