@@ -17,20 +17,33 @@ Built with **ASP.NET Core (.NET 9)** + **Entity Framework Core** + **PostgreSQL 
 ```text
 FrenzoAPI/
 ├── FrenzoAPI/
-│   ├── Common/Responses/    # ApiResponse<T> envelope
-│   ├── Controllers/       # Custom API controllers (template WeatherForecast removed)
+│   ├── Common/
+│   │   ├── Responses/       # ApiResponse<T> envelope
+│   │   └── Middleware/      # ExceptionMiddleware, CorrelationMiddleware
+│   ├── Controllers/       # AuthController, ConversationsController, UsersController
 │   ├── DataContext/
-│   │   └── AppDbContext.cs # Scaffolded DbContext (FrenZoAPI.DataContext)
-│   ├── DTOs/Auth/         # SignupRequest, LoginRequest, UserResponse
-│   ├── Services/          # IAuthService + AuthService (BCrypt + EF)
+│   │   ├── AppDbContext.cs         # Scaffolded DbContext (FrenZoAPI.DataContext)
+│   │   └── AppDbContext.Partial.cs # Scaffold-safe keys for keyless join tables
+│   ├── DTOs/
+│   │   ├── Auth/          # SignupRequest, LoginRequest, UserResponse, AuthResponse
+│   │   └── Chat/          # ChatlistQuery/Item, LastMessage, UserListQuery/Item, StartDirectRequest
+│   ├── Services/          # IAuthService/AuthService, ITokenService/TokenService,
+│   │                       # IConversationService/ConversationService
 │   ├── Models/            # Scaffolded entities (FrenZoAPI.Models) — 13 tables
 │   ├── Program.cs
 │   ├── appsettings.json
 │   └── FrenzoAPI.csproj
 ├── docs/
-│   ├── CHANGELOG.md             # Day-wise changes, commands, packages
-│   ├── IMPLEMENTATION_PLAN_Auth.md # Detailed Auth plan + rationale
-│   └── features/Auth.md         # Per-feature Auth spec (routes, payloads)
+│   ├── CHANGELOG.md                 # Day-wise changes, commands, packages
+│   ├── RULEBOOK.md                  # Coding + process rules v1–v6
+│   ├── TODO.md                      # Pending / done tracker
+│   ├── IMPLEMENTATION_PLAN_Auth.md  # Detailed Auth plan + rationale
+│   ├── IMPLEMENTATION_PLAN_Jwt.md   # JWT what/why/how + flow
+│   ├── IMPLEMENTATION_PLAN_Chatlist.md # Chatlist query design + contract
+│   ├── features/Auth.md             # Per-feature Auth spec
+│   ├── features/Chat.md             # Per-feature Chat spec
+│   ├── database/                    # 01-schema.sql, SCHEMA.md, TIMESTAMP_DECISION.md
+│   └── interviews/                  # Printable Q&A per implemented topic
 └── README.md
 ```
 
@@ -68,26 +81,24 @@ Context: `AppDbContext` (`FrenZoAPI/DataContext/AppDbContext.cs`)
 dotnet restore
 ```
 
-### 2. Configure connection string
+### 2. Connection string (already wired)
 
-`AppDbContext` was scaffolded with `--no-onconfiguring`, so no connection string is hardcoded. Add it yourself:
+`AppDbContext` was scaffolded with `--no-onconfiguring`, so the string lives in settings (never in code),
+registered in `Program.cs` via `AddDbContext(UseNpgsql)`:
 
 `FrenzoAPI/appsettings.Development.json`:
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Port=3311;Database=frenzodb;Username=postgres;Password=****"
+  },
+  "Jwt": {
+    "Key": "**** (32+ chars, dev placeholder — use User Secrets in production)",
+    "Issuer": "FrenZoAPI",
+    "Audience": "FrenZoAPI",
+    "AccessTokenMinutes": 60
   }
 }
-```
-
-Register in `FrenzoAPI/Program.cs`:
-```csharp
-using FrenZoAPI.DataContext;
-using Microsoft.EntityFrameworkCore;
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 ```
 
 ### 3. Re-scaffold (Database-First, when DB changes)
@@ -110,7 +121,9 @@ OpenAPI (Development only): `/openapi/v1.json`
 ```powershell
 dotnet run --project "D:\DotNetCodes\FrenZoAPI\FrenZoAPI\FrenZoAPI.csproj"
 ```
-Open `https://localhost:<port>/scalar/v1` (port shown in console) → try `POST api/auth/signup` and `POST api/auth/login` directly from the browser.
+Open `https://localhost:<port>/scalar/v1` (port shown in console) → login first, paste the token
+via the Authorize button (Bearer scheme), then try `GET api/conversations`, `GET api/users`,
+and `POST api/conversations/direct` directly from the browser.
 
 ## Endpoints
 
@@ -126,13 +139,17 @@ Only custom FrenZo endpoints are listed here (template `WeatherForecast` removed
 
 When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's `Endpoints added` section.
 
-## Docs
+## Docs (all under `docs/`, local-only via `.gitignore`)
 
 - `docs/CHANGELOG.md` — day-wise log: commands executed, packages installed, files generated, endpoints added.
+- `docs/RULEBOOK.md` — coding + process rules (v1–v6).
+- `docs/TODO.md` — pending / done tracker.
 - `docs/IMPLEMENTATION_PLAN_Auth.md` — detailed Auth implementation plan + rationale.
 - `docs/IMPLEMENTATION_PLAN_Jwt.md` — JWT step-by-step: what/why/how + implementation flow (future reference).
-- `docs/features/Auth.md` — per-feature Auth spec (routes, request/response examples).
 - `docs/IMPLEMENTATION_PLAN_Chatlist.md` — chatlist query design + contract.
-- `docs/features/Chat.md` — per-feature Chat spec (routes, request/response examples).
+- `docs/features/Auth.md` — per-feature Auth spec (routes, request/response examples).
+- `docs/features/Chat.md` — per-feature Chat spec (user picker + start-direct included).
 - `docs/database/01-schema.sql` — full pgAdmin schema export (source of truth).
 - `docs/database/SCHEMA.md` — schema reference + timestamp-type note (UTC fix).
+- `docs/database/TIMESTAMP_DECISION.md` — keep-as-is verdict per table×column + UTC contract.
+- `docs/interviews/` — printable Q&A per implemented topic (index + per-topic files).
