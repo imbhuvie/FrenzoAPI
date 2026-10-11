@@ -121,6 +121,8 @@ Only custom FrenZo endpoints are listed here (template `WeatherForecast` removed
 | POST | `/api/auth/signup` | Register user (username + email + phone + password, BCrypt hash; tokenless) | 2026-10-10 |
 | POST | `/api/auth/login` | Login with username / email / phone + password → `{ user, token, expiresAt }` (60-min JWT) | 2026-10-10 (JWT added) |
 | GET | `/api/conversations` | Caller chatlist + last message (`[Authorize]`, cursor paging) | 2026-10-10 |
+| GET | `/api/users` | Active users + direct-chat flags (`[Authorize]`, search) | 2026-10-11 |
+| POST | `/api/conversations/direct` | Open-or-create Private 1-1 (`[Authorize]`, idempotent) | 2026-10-11 |
 
 When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's `Endpoints added` section.
 

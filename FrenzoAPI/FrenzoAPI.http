@@ -38,3 +38,17 @@ Accept: application/json
 GET {{FrenzoAPI_HostAddress}}/api/conversations?pageSize=20&cursor=2026-10-10T12:00:00Z
 Authorization: Bearer <token>
 Accept: application/json
+
+### User picker (paste login token below)
+GET {{FrenzoAPI_HostAddress}}/api/users?search=&pageSize=20
+Authorization: Bearer <token>
+Accept: application/json
+
+### Start direct chat (paste login token + other user id below)
+POST {{FrenzoAPI_HostAddress}}/api/conversations/direct
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "otherUserId": "<user-guid>"
+}
