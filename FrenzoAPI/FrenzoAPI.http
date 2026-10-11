@@ -28,3 +28,13 @@ Content-Type: application/json
   "identifier": "bhupen",
   "password": "Secret123"
 }
+
+### Chatlist (paste login token below)
+GET {{FrenzoAPI_HostAddress}}/api/conversations?pageSize=20
+Authorization: Bearer <token>
+Accept: application/json
+
+### Chatlist next page (cursor = last row UpdatedAt)
+GET {{FrenzoAPI_HostAddress}}/api/conversations?pageSize=20&cursor=2026-10-10T12:00:00Z
+Authorization: Bearer <token>
+Accept: application/json

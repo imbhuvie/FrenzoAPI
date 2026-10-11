@@ -4,8 +4,11 @@ using FrenZoAPI.DataContext;
 using FrenZoAPI.Services;
 using FrenZoAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -21,10 +24,47 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Routes all ILogger output (including the exception middleware) through Serilog.
 builder.Host.UseSerilog();
 
-// Registers controllers and the Dev-only OpenAPI document.
+// Registers controllers and the Dev-only OpenAPI document (Bearer scheme feeds Scalar's Auth button).
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    // Declares the JWT scheme once so locked endpoints show the global Authorize input.
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
+        OpenApiSecurityScheme bearerScheme = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Paste the login access token. Scalar sends it as: Bearer <token>."
+        };
+        document.Components.SecuritySchemes["Bearer"] = bearerScheme;
+        return Task.CompletedTask;
+    });
+
+    // Marks only [Authorize] operations as locked (login/signup stay open).
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        IList<object> endpointMetadata = context.Description.ActionDescriptor?.EndpointMetadata ?? new List<object>();
+        bool requiresAuth = endpointMetadata.OfType<IAuthorizeData>().Any();
+        if (requiresAuth)
+        {
+            operation.Security ??= new List<OpenApiSecurityRequirement>();
+            OpenApiSecurityScheme schemeReference = new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            };
+            OpenApiSecurityRequirement requirement = new OpenApiSecurityRequirement
+            {
+                [schemeReference] = new List<string>()
+            };
+            operation.Security.Add(requirement);
+        }
+        return Task.CompletedTask;
+    });
+});
 
 // Binds AppDbContext to Postgres via the DefaultConnection string.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -35,6 +75,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Signs access tokens after login (claims: sub, unique_name, email).
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+// Builds the chatlist rows for the signed-in caller.
+builder.Services.AddScoped<IConversationService, ConversationService>();
 
 // Reads the shared Jwt settings once (R6: no config calls inside the options lambda conditions).
 string jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
