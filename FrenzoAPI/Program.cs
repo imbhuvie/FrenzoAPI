@@ -1,6 +1,7 @@
 using System.Text;
 using FrenZoAPI.Common.Middleware;
 using FrenZoAPI.DataContext;
+using FrenZoAPI.Hubs;
 using FrenZoAPI.Services;
 using FrenZoAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,6 +27,7 @@ builder.Host.UseSerilog();
 
 // Registers controllers and the Dev-only OpenAPI document (Bearer scheme feeds Scalar's Auth button).
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddOpenApi(options =>
 {
     // Declares the JWT scheme once so locked endpoints show the global Authorize input.
@@ -79,6 +81,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 // Builds the chatlist rows for the signed-in caller.
 builder.Services.AddScoped<IConversationService, ConversationService>();
 
+// Persists chat messages for the realtime hub to broadcast.
+builder.Services.AddScoped<IMessageService, MessageService>();
+
 // Reads the shared Jwt settings once (R6: no config calls inside the options lambda conditions).
 string jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
 string jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "FrenZoAPI";
@@ -98,6 +103,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtAudience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
+        };
+
+        // WebSockets cannot set headers, so the hub token arrives as ?access_token= (hub paths only).
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                string? accessToken = context.Request.Query["access_token"];
+                string? path = context.HttpContext.Request.Path.Value;
+                bool isHubPath = path is not null && path.StartsWith("/hubs/chat");
+                bool isMissingToken = string.IsNullOrWhiteSpace(accessToken);
+                bool useQueryToken = isHubPath && !isMissingToken;
+                if (useQueryToken)
+                    context.Token = accessToken;
+                return Task.CompletedTask;
+            }
         };
     });
 builder.Services.AddAuthorization();
@@ -122,5 +143,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Realtime chat hub (JWT via Authorization header or ?access_token=, [Authorize] enforced).
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

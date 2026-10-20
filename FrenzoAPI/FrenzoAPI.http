@@ -52,3 +52,13 @@ Content-Type: application/json
 {
   "otherUserId": "<user-guid>"
 }
+
+### Message history (paste login token + conversation id below)
+GET {{FrenzoAPI_HostAddress}}/api/conversations/<conversation-guid>/messages?pageSize=30
+Authorization: Bearer <token>
+Accept: application/json
+
+### Mark as read (paste login token + conversation id below)
+POST {{FrenzoAPI_HostAddress}}/api/conversations/<conversation-guid>/read
+Authorization: Bearer <token>
+Accept: application/json

@@ -21,14 +21,16 @@ FrenzoAPI/
 │   │   ├── Responses/       # ApiResponse<T> envelope
 │   │   └── Middleware/      # ExceptionMiddleware, CorrelationMiddleware
 │   ├── Controllers/       # AuthController, ConversationsController, UsersController
+│   ├── Hubs/              # ChatHub (realtime persist + broadcast)
 │   ├── DataContext/
 │   │   ├── AppDbContext.cs         # Scaffolded DbContext (FrenZoAPI.DataContext)
 │   │   └── AppDbContext.Partial.cs # Scaffold-safe keys for keyless join tables
 │   ├── DTOs/
 │   │   ├── Auth/          # SignupRequest, LoginRequest, UserResponse, AuthResponse
-│   │   └── Chat/          # ChatlistQuery/Item, LastMessage, UserListQuery/Item, StartDirectRequest
+│   │   └── Chat/          # ChatlistQuery/Item, LastMessage, UserListQuery/Item,
+│   │                       # StartDirectRequest, SendMessageRequest, MessageBroadcast
 │   ├── Services/          # IAuthService/AuthService, ITokenService/TokenService,
-│   │                       # IConversationService/ConversationService
+│   │                       # IConversationService/ConversationService, IMessageService/MessageService
 │   ├── Models/            # Scaffolded entities (FrenZoAPI.Models) — 13 tables
 │   ├── Program.cs
 │   ├── appsettings.json
@@ -136,6 +138,9 @@ Only custom FrenZo endpoints are listed here (template `WeatherForecast` removed
 | GET | `/api/conversations` | Caller chatlist + last message (`[Authorize]`, cursor paging) | 2026-10-10 |
 | GET | `/api/users` | Active users + direct-chat flags (`[Authorize]`, search) | 2026-10-11 |
 | POST | `/api/conversations/direct` | Open-or-create Private 1-1 (`[Authorize]`, idempotent) | 2026-10-11 |
+| Hub | `/hubs/chat` | Realtime chat: `SendMessage` persists + broadcasts `ReceiveMessage` (`[Authorize]`, JWT via header or `?access_token=`) | 2026-10-11 |
+| GET | `/api/conversations/{id}/messages` | History page, ascending (`[Authorize]`, cursor paging) | 2026-10-11 |
+| POST | `/api/conversations/{id}/read` | Advance read marker (`[Authorize]`) | 2026-10-11 |
 
 When adding an endpoint, also append it to `docs/CHANGELOG.md` under that day's `Endpoints added` section.
 
